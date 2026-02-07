@@ -95,6 +95,7 @@ export default function Home() {
   const heroOpacity = useTransform(progress, [0, 0.18, 0.24], [1, 1, 0]);
   const heroY = useTransform(progress, [0, 0.18, 0.24], [0, -6, -12]);
   const heroScale = useTransform(progress, [0, 0.18, 0.24], [1, 0.99, 0.98]);
+  const heroCueOpacity = useTransform(progress, [0, 0.02], [1, 0]);
 
   // LINE 1
   const l1Opacity = useTransform(progress, [0.24, 0.34, 0.42], [0, 1, 0]);
@@ -140,6 +141,13 @@ export default function Home() {
                 don’t need an introduction.
               </h1>
               <div className="mt-8 h-px w-24 bg-[#E66B7A]/40 mx-auto" />
+              <motion.div
+                className="mt-4 flex flex-col items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-white/50"
+                style={{ opacity: heroCueOpacity }}
+              >
+                <span className="text-xs leading-none">↓</span>
+                <span className="text-[9px] leading-none">scroll</span>
+              </motion.div>
             </motion.div>
 
             {/* LINE 1 */}
