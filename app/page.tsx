@@ -192,7 +192,7 @@ export default function Home() {
 
               <footer className="mt-12 flex flex-col items-center gap-2 text-xs md:text-sm opacity-45">
                 <p>Designed for people who feel first.</p>
-                <p>© Ampup</p>
+                <p>© AmpUp</p>
               </footer>
             </motion.div>
 
