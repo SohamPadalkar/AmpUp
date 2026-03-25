@@ -1,15 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion, useMotionValue, useMotionValueEvent, useTransform } from "framer-motion";
 
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
+const isInteractiveTarget = (target: EventTarget | null) => {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return Boolean(target.closest("a, button, input, textarea, select, [role='button']"));
+};
+
 export default function Home() {
   const progress = useMotionValue(0);
   const [isLocked, setIsLocked] = useState(true);
+  const [showFloatingCta, setShowFloatingCta] = useState(true);
   const isLockedRef = useRef(true);
   const lastTouchYRef = useRef<number | null>(null);
 
@@ -47,6 +56,11 @@ export default function Home() {
         return;
       }
 
+      if (isInteractiveTarget(event.target)) {
+        lastTouchYRef.current = null;
+        return;
+      }
+
       if (event.touches.length > 0) {
         lastTouchYRef.current = event.touches[0].clientY;
       }
@@ -54,6 +68,10 @@ export default function Home() {
 
     const handleTouchMove = (event: TouchEvent) => {
       if (!isLockedRef.current) {
+        return;
+      }
+
+      if (isInteractiveTarget(event.target)) {
         return;
       }
 
@@ -121,6 +139,11 @@ export default function Home() {
   const revealOpacity = useTransform(progress, [0.9, 1], [0, 1]);
   const revealY = useTransform(progress, [0.9, 1], [8, 0]);
   const revealScale = useTransform(progress, [0.9, 1], [0.985, 1]);
+  const surveyUrl = "https://forms.gle/vARQNtwr8KgW4G5j8";
+
+  useMotionValueEvent(progress, "change", (latest) => {
+    setShowFloatingCta(latest < 0.9);
+  });
 
   return (
     <main className="relative px-6 text-white antialiased">
@@ -135,14 +158,14 @@ export default function Home() {
               className="absolute text-center max-w-3xl pointer-events-none"
               style={{ opacity: heroOpacity, y: heroY, scale: heroScale }}
             >
-              <h1 className="text-[45px] md:text-[64px] leading-tight tracking-tight">
+              <h1 className="pointer-events-none text-[45px] md:text-[64px] leading-tight tracking-tight">
                 Some{" "}
                 <span className="text-[#E66B7A]">matches</span>{" "}
                 don’t need an introduction.
               </h1>
-              <div className="mt-8 h-px w-24 bg-[#E66B7A]/40 mx-auto" />
+              <div className="pointer-events-none mt-8 h-px w-24 bg-[#E66B7A]/40 mx-auto" />
               <motion.div
-                className="mt-4 flex flex-col items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-white/50"
+                className="pointer-events-none mt-4 flex flex-col items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-white/50"
                 style={{ opacity: heroCueOpacity }}
               >
                 <span className="text-xs leading-none">↓</span>
@@ -194,8 +217,36 @@ export default function Home() {
                 through feeling and music.
               </p>
 
-              <div className="mt-10 flex flex-col items-center gap-6">
-                <p className="text-lg md:text-xl text-center opacity-70">Coming soon.</p>
+              <div className="mt-10 flex flex-col items-center gap-4 pointer-events-auto">
+                <motion.div
+                  className="flex flex-col items-center gap-3"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+                >
+                  <p className="text-xs md:text-sm uppercase tracking-[0.18em] text-white/45">
+                    Help us shape this
+                  </p>
+                  <motion.a
+                    href={surveyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ WebkitTapHighlightColor: "transparent" }}
+                    whileHover={{
+                      scale: 1.03,
+                      boxShadow: "0 16px 34px rgba(230, 107, 122, 0.3)",
+                      backgroundColor: "rgb(238, 122, 136)",
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                    className="inline-flex min-h-12 min-w-[220px] whitespace-nowrap items-center justify-center rounded-full border border-[#F08A97]/75 bg-[#E66B7A] px-8 py-3 text-sm font-medium leading-none tracking-[0.01em] text-[#4B0F18] no-underline visited:text-[#4B0F18] focus:text-[#4B0F18] active:text-[#4B0F18] shadow-[0_10px_24px_rgba(230,107,122,0.26)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E66B7A]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black active:bg-[#DA6171] md:min-w-[240px] md:text-base"
+                  >
+                    Take 1-min Survey
+                  </motion.a>
+                  <p className="text-[11px] md:text-xs tracking-[0.04em] text-white/50">
+                    Takes less than 60 seconds
+                  </p>
+                </motion.div>
               </div>
 
               <footer className="mt-12 flex flex-col items-center gap-2 text-xs md:text-sm opacity-45">
@@ -207,6 +258,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {showFloatingCta && (
+        <motion.a
+          href={surveyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            WebkitTapHighlightColor: "transparent",
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: "easeOut", delay: 0.2 }}
+          whileHover={{
+            scale: 1.03,
+            boxShadow: "0 14px 30px rgba(230, 107, 122, 0.28)",
+            backgroundColor: "rgb(238, 122, 136)",
+          }}
+          whileTap={{ scale: 0.98 }}
+          className="fixed left-1/2 z-50 inline-flex min-h-12 min-w-[220px] -translate-x-1/2 whitespace-nowrap items-center justify-center rounded-full border border-[#F08A97]/70 bg-[#E66B7A] px-8 py-3 text-sm font-medium leading-none text-[#4B0F18] no-underline visited:text-[#4B0F18] focus:text-[#4B0F18] active:text-[#4B0F18] shadow-[0_8px_22px_rgba(230,107,122,0.24)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E66B7A]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black active:bg-[#DA6171] md:min-w-[240px] md:text-[15px]"
+        >
+          Take 1-min Survey
+        </motion.a>
+      )}
 
     </main>
   );
