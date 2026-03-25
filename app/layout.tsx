@@ -7,7 +7,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata = {
-  title: "Ampup",
+  title: "AmpUp",
   description: "Some matches don’t need an introduction.",
 };
 
