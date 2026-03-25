@@ -18,6 +18,7 @@ const isInteractiveTarget = (target: EventTarget | null) => {
 export default function Home() {
   const progress = useMotionValue(0);
   const [isLocked, setIsLocked] = useState(true);
+  const [isSafari, setIsSafari] = useState(false);
   const [showFloatingCta, setShowFloatingCta] = useState(true);
   const isLockedRef = useRef(true);
   const lastTouchYRef = useRef<number | null>(null);
@@ -27,8 +28,41 @@ export default function Home() {
   }, [isLocked]);
 
   useEffect(() => {
+    const ua = navigator.userAgent;
+    const isSafariLike =
+      /Safari/i.test(ua) &&
+      !/Chrome|Chromium|CriOS|EdgiOS|FxiOS|OPiOS|Android/i.test(ua);
+
+    setIsSafari(isSafariLike);
+  }, []);
+
+  useEffect(() => {
     if (!isLocked) {
       return;
+    }
+
+    if (isSafari) {
+      const handleNativeScroll = () => {
+        const maxScrollable =
+          document.documentElement.scrollHeight - window.innerHeight;
+
+        if (maxScrollable <= 0) {
+          progress.set(0);
+          return;
+        }
+
+        const next = clamp(window.scrollY / maxScrollable, 0, 1);
+        progress.set(next);
+      };
+
+      window.addEventListener("scroll", handleNativeScroll, { passive: true });
+      window.addEventListener("resize", handleNativeScroll);
+      handleNativeScroll();
+
+      return () => {
+        window.removeEventListener("scroll", handleNativeScroll);
+        window.removeEventListener("resize", handleNativeScroll);
+      };
     }
 
     const prevOverflow = document.body.style.overflow;
@@ -36,6 +70,7 @@ export default function Home() {
     const prevTouchAction = document.body.style.touchAction;
     document.body.style.overflow = "hidden";
     document.body.style.overscrollBehavior = "none";
+    document.body.style.touchAction = "none";
     
 
     const handleWheel = (event: WheelEvent) => {
@@ -105,8 +140,9 @@ export default function Home() {
       window.removeEventListener("touchend", handleTouchEnd);
       document.body.style.overflow = prevOverflow;
       document.body.style.overscrollBehavior = prevOverscroll;
+      document.body.style.touchAction = prevTouchAction;
     };
-  }, [isLocked, progress]);
+  }, [isLocked, isSafari, progress]);
 
 
   // HERO
@@ -149,7 +185,7 @@ export default function Home() {
     <main className="relative px-6 text-white antialiased">
 
       {/* HERO SEQUENCE */}
-      <section className="relative h-screen">
+      <section className={`relative h-screen ${isSafari ? "sticky top-0" : ""}`}>
         <div className="h-screen flex items-center justify-center overflow-hidden">
           <div className="relative w-full h-full flex items-center justify-center">
 
@@ -258,6 +294,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {isSafari && <div aria-hidden="true" className="h-[320vh]" />}
 
       {showFloatingCta && (
         <motion.a
